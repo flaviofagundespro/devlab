@@ -1,0 +1,336 @@
+{
+  "info": {
+    "name": "APIBR - Web Scraping API",
+    "description": "Collection completa para testar a API APIBR",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "x-api-key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{API_KEY}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "API_KEY",
+      "value": "your-api-key-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/health",
+              "host": ["{{BASE_URL}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Synchronous Scraping",
+      "item": [
+        {
+          "name": "Basic HTML Scraping",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"basic\",\n  \"url\": \"https://httpbin.org/html\",\n  \"selectors\": {\n    \"title\": {\n      \"query\": \"h1\"\n    },\n    \"paragraphs\": {\n      \"query\": \"p\",\n      \"multiple\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        },
+        {
+          "name": "Screenshot Capture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"screenshot\",\n  \"url\": \"https://httpbin.org/html\",\n  \"screenshotOptions\": {\n    \"fullPage\": true,\n    \"type\": \"png\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        },
+        {
+          "name": "JavaScript Execution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"javascript\",\n  \"url\": \"https://httpbin.org/html\",\n  \"script\": \"return { title: document.title, url: window.location.href, userAgent: navigator.userAgent };\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        },
+        {
+          "name": "Form Interaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"form\",\n  \"url\": \"https://httpbin.org/forms/post\",\n  \"interactions\": [\n    {\n      \"type\": \"type\",\n      \"selector\": \"input[name='custname']\",\n      \"value\": \"Test User\"\n    },\n    {\n      \"type\": \"type\",\n      \"selector\": \"input[name='custtel']\",\n      \"value\": \"123456789\"\n    },\n    {\n      \"type\": \"wait\",\n      \"timeout\": 1000\n    }\n  ],\n  \"finalSelectors\": {\n    \"form\": {\n      \"query\": \"form\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Asynchronous Scraping",
+      "item": [
+        {
+          "name": "Queue Async Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('JOB_ID', response.jobId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"basic\",\n  \"url\": \"https://httpbin.org/html\",\n  \"selectors\": {\n    \"title\": {\n      \"query\": \"h1\"\n    }\n  },\n  \"priority\": \"normal\",\n  \"webhook\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"method\": \"POST\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape/async",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape", "async"]
+            }
+          }
+        },
+        {
+          "name": "Check Job Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/jobs/{{JOB_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "jobs", "{{JOB_ID}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Monitoring",
+      "item": [
+        {
+          "name": "Browser Pool Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape/stats",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Job Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/jobs",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/metrics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "JSON Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/metrics/json",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "metrics", "json"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documentation",
+      "item": [
+        {
+          "name": "Swagger Spec",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/docs/spec",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "docs", "spec"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "Invalid Strategy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"invalid\",\n  \"url\": \"https://httpbin.org/html\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        },
+        {
+          "name": "Missing URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy\": \"basic\",\n  \"selectors\": {\n    \"title\": { \"query\": \"h1\" }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/scrape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scrape"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Job ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/jobs/invalid-job-id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "jobs", "invalid-job-id"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

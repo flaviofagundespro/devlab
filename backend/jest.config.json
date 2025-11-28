@@ -1,0 +1,29 @@
+{
+  "type": "module",
+  "preset": "default",
+  "testEnvironment": "node",
+  "extensionsToTreatAsEsm": [".js"],
+  "globals": {
+    "NODE_OPTIONS": "--experimental-vm-modules"
+  },
+  "testMatch": [
+    "**/src/tests/**/*.test.js"
+  ],
+  "collectCoverageFrom": [
+    "src/**/*.js",
+    "!src/tests/**",
+    "!src/server.js"
+  ],
+  "coverageDirectory": "coverage",
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html"
+  ],
+  "setupFilesAfterEnv": [
+    "<rootDir>/src/tests/setup.js"
+  ],
+  "testTimeout": 30000,
+  "transform": {}
+}
+

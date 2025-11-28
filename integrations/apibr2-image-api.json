@@ -1,0 +1,162 @@
+{
+  "info": {
+    "name": "APIBR2 Image Generation API",
+    "description": "API para geração de imagens com Flux e Stable Diffusion",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5001/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5001",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "List Models",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5001/models",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5001",
+          "path": ["models"]
+        }
+      }
+    },
+    {
+      "name": "Generate Image - Flux",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"Um gato fofo sentado em um jardim colorido\",\n  \"model\": \"FLUX.1-dev\",\n  \"size\": \"1024x1024\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/image/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "image", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Generate Image - Stable Diffusion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"Um cachorro brincando na praia ao pôr do sol\",\n  \"model\": \"stabilityai/stable-diffusion-3.5-large\",\n  \"size\": \"1024x1024\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/image/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "image", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Edit Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"image_url\": \"http://localhost:5001/images/FLUX.1-dev_1751695914_6041ce18.png\",\n  \"prompt\": \"Adicionar um arco-íris no céu\",\n  \"model\": \"stabilityai/stable-diffusion-3.5-large\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/image/edit",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "image", "edit"]
+        }
+      }
+    },
+    {
+      "name": "Upscale Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"image_url\": \"http://localhost:5001/images/FLUX.1-dev_1751695914_6041ce18.png\",\n  \"model\": \"stabilityai/stable-diffusion-3.5-large\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/image/upscale",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "image", "upscale"]
+        }
+      }
+    },
+    {
+      "name": "Generate Image - Cyberpunk",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"Uma paisagem futurista com prédios altos, carros voadores e neon azul, estilo cyberpunk\",\n  \"model\": \"FLUX.1-dev\",\n  \"size\": \"1024x1024\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/image/generate",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "image", "generate"]
+        }
+      }
+    }
+  ]
+} 

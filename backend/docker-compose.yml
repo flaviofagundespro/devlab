@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # Main API service
+  apibr:
+    build:
+      context: .
+      target: production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - BROWSER_POOL_SIZE=3
+      - BROWSER_HEADLESS=true
+      - CACHE_TTL=3600
+      - RATE_LIMIT_WINDOW=900000
+      - RATE_LIMIT_MAX=100
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+    depends_on:
+      - redis
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - apibr-network
+
+  # Redis cache service
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - apibr-network
+    command: redis-server --appendonly yes
+
+  # Development service (alternative to production)
+  apibr-dev:
+    build:
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - BROWSER_POOL_SIZE=2
+      - BROWSER_HEADLESS=true
+      - LOG_LEVEL=debug
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    networks:
+      - apibr-network
+    profiles:
+      - dev
+
+  # Prometheus monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - apibr-network
+    profiles:
+      - monitoring
+
+  # Grafana dashboard (optional)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - apibr-network
+    profiles:
+      - monitoring
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  apibr-network:
+    driver: bridge
+

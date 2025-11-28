@@ -1,0 +1,294 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_health",
+      "parentId": "fld_health",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/health",
+      "name": "Health Check",
+      "description": "Verifica o status da API",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_api_info",
+      "parentId": "fld_health",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api",
+      "name": "API Info",
+      "description": "Informações da API",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_basic_scrape",
+      "parentId": "fld_sync_scraping",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api/scrape",
+      "name": "Basic HTML Scraping",
+      "description": "Scraping básico de HTML",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"strategy\": \"basic\",\n  \"url\": \"https://httpbin.org/html\",\n  \"selectors\": {\n    \"title\": {\n      \"query\": \"h1\"\n    },\n    \"paragraphs\": {\n      \"query\": \"p\",\n      \"multiple\": true\n    }\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_screenshot",
+      "parentId": "fld_sync_scraping",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api/scrape",
+      "name": "Screenshot Capture",
+      "description": "Captura de screenshot",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"strategy\": \"screenshot\",\n  \"url\": \"https://httpbin.org/html\",\n  \"screenshotOptions\": {\n    \"fullPage\": true,\n    \"type\": \"png\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_async_scrape",
+      "parentId": "fld_async_scraping",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api/scrape/async",
+      "name": "Queue Async Job",
+      "description": "Criar job assíncrono",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"strategy\": \"basic\",\n  \"url\": \"https://httpbin.org/html\",\n  \"selectors\": {\n    \"title\": {\n      \"query\": \"h1\"\n    }\n  },\n  \"priority\": \"normal\",\n  \"webhook\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"method\": \"POST\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_job_status",
+      "parentId": "fld_async_scraping",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api/jobs/{{ _.JOB_ID }}",
+      "name": "Check Job Status",
+      "description": "Verificar status do job",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_metrics",
+      "parentId": "fld_monitoring",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request",
+      "url": "{{ _.BASE_URL }}/api/metrics",
+      "name": "Prometheus Metrics",
+      "description": "Métricas Prometheus",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "apikey",
+        "key": "x-api-key",
+        "value": "{{ _.API_KEY }}"
+      },
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_health",
+      "parentId": "wrk_apibr",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request_group",
+      "name": "Health & Info",
+      "description": "Endpoints de saúde e informações",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000
+    },
+    {
+      "_id": "fld_sync_scraping",
+      "parentId": "wrk_apibr",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request_group",
+      "name": "Synchronous Scraping",
+      "description": "Scraping síncrono",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000
+    },
+    {
+      "_id": "fld_async_scraping",
+      "parentId": "wrk_apibr",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request_group",
+      "name": "Asynchronous Scraping",
+      "description": "Scraping assíncrono",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000
+    },
+    {
+      "_id": "fld_monitoring",
+      "parentId": "wrk_apibr",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "request_group",
+      "name": "Monitoring",
+      "description": "Monitoramento e métricas",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000
+    },
+    {
+      "_id": "wrk_apibr",
+      "parentId": null,
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "workspace",
+      "name": "APIBR - Web Scraping API",
+      "description": "Collection completa para testar a API APIBR"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_apibr",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "BASE_URL": "http://localhost:3000",
+        "API_KEY": "your-api-key-here",
+        "JOB_ID": ""
+      },
+      "dataPropertyOrder": {
+        "&": ["BASE_URL", "API_KEY", "JOB_ID"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1704067200000
+    }
+  ]
+}
+

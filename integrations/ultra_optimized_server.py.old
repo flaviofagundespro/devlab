@@ -1,0 +1,503 @@
+#!/usr/bin/env python3
+"""
+APIBR2 - Ultra Optimized Image Generation Server
+Servidor com gerenciamento avançado de memória e otimizações extremas
+"""
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from pathlib import Path
+import torch
+import uuid
+import time
+import os
+import base64
+import logging
+import gc
+from datetime import datetime
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="APIBR2 Ultra Optimized Generator", version="1.0.0")
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Configurações
+OUT_DIR = Path("generated_images")
+OUT_DIR.mkdir(exist_ok=True)
+
+# Forçar CPU se DirectML estiver dando problemas (variável de ambiente)
+FORCE_CPU = os.getenv("FORCE_CPU", "false").lower() == "true"
+
+# Cache de pipelines carregados
+pipes = {}
+
+class ImageRequest(BaseModel):
+    prompt: str
+    model: str = "runwayml/stable-diffusion-v1-5"
+    steps: int = 12  # Ultra otimizado
+    guidance_scale: float = 7.5
+    width: int = 512
+    height: int = 512
+    size: str = "512x512"
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Se size foi fornecido, usar para width e height
+        if 'size' in data and data['size']:
+            try:
+                parts = data['size'].split('x')
+                if len(parts) == 2:
+                    self.width = int(parts[0])
+                    self.height = int(parts[1])
+            except:
+                pass
+
+def detect_device():
+    """Detectar o melhor device disponível"""
+    try:
+        # Se FORCE_CPU estiver ativado, pular detecção de GPU
+        if FORCE_CPU:
+            logger.info("⚠️ FORCE_CPU ativado - usando CPU")
+            return "cpu"
+        
+        # Tentar DirectML primeiro (AMD GPU)
+        try:
+            if hasattr(torch, 'dml') and torch.dml.is_available():
+                logger.info("✅ AMD GPU detectada - usando DirectML")
+                return "dml"
+            else:
+                # Tentar importar torch-directml se não estiver disponível
+                try:
+                    import torch_directml
+                    if torch_directml.is_available():
+                        logger.info("✅ AMD GPU detectada via torch-directml - usando DirectML")
+                        return "dml"
+                except ImportError:
+                    logger.warning("⚠️ torch-directml não instalado. Para usar GPU AMD, execute: pip install torch-directml")
+        except Exception as e:
+            logger.debug(f"DirectML check failed: {e}")
+        
+        # Tentar CUDA (NVIDIA GPU)
+        if torch.cuda.is_available():
+            logger.info("✅ NVIDIA GPU detectada - usando CUDA")
+            return "cuda"
+        
+        # Tentar MPS (Apple Silicon)
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            logger.info("✅ Apple Silicon detectado - usando MPS")
+            return "mps"
+        
+        # Fallback para CPU
+        logger.warning("⚠️ Nenhuma GPU detectada - usando CPU (muito lento)")
+        logger.warning("💡 Para usar GPU AMD: pip install torch-directml")
+        return "cpu"
+    except Exception as e:
+        logger.warning(f"Erro ao detectar device: {e}, usando CPU")
+        return "cpu"
+
+def get_model_config(model_name, device="cpu"):
+    """Configurações específicas por modelo e device"""
+    # DirectML precisa de menos steps para ser mais rápido
+    if device == "dml":
+        base_steps = 15  # DirectML funciona bem com 15 steps
+    else:
+        base_steps = 20  # CPU/CUDA pode usar mais steps
+    
+    configs = {
+        'runwayml/stable-diffusion-v1-5': {
+            'steps': base_steps,
+            'guidance_scale': 7.5,
+            'size': '512x512',
+            'memory_efficient': True
+        },
+        'stabilityai/sdxl-turbo': {
+            'steps': 4 if device == "dml" else 6,  # SDXL Turbo funciona com poucos steps
+            'guidance_scale': 7.5,
+            'size': '512x512',
+            'memory_efficient': True
+        },
+        'lykon/dreamshaper-8': {
+            'steps': base_steps,
+            'guidance_scale': 7.5,
+            'size': '512x512',
+            'memory_efficient': True
+        }
+    }
+    return configs.get(model_name, configs['runwayml/stable-diffusion-v1-5'])
+
+def get_pipe(model_name):
+    """Carrega o pipeline do modelo com otimizações extremas"""
+    
+    # Mapear nomes curtos
+    model_mapping = {
+        'stable-diffusion-1.5': 'runwayml/stable-diffusion-v1-5',
+        'sdxl-turbo': 'stabilityai/sdxl-turbo',
+        'dreamshaper': 'lykon/dreamshaper-8',
+        'FLUX.1-dev': 'runwayml/stable-diffusion-v1-5'
+    }
+    
+    full_model_name = model_mapping.get(model_name, model_name)
+    
+    if full_model_name not in pipes:
+        logger.info(f"Loading model: {full_model_name} (requested: {model_name})")
+        try:
+            device = detect_device()
+            
+            # Configurar dtype
+            if device == "dml":
+                torch_dtype = torch.float32
+            elif device == "cuda":
+                torch_dtype = torch.float16
+            else:
+                torch_dtype = torch.float32
+            
+            logger.info(f"Using device: {device}, dtype: {torch_dtype}")
+            
+            # Importar diffusers
+            from diffusers import StableDiffusionPipeline
+            
+            # Carregar pipeline
+            pipes[full_model_name] = StableDiffusionPipeline.from_pretrained(
+                full_model_name, 
+                torch_dtype=torch_dtype,
+                use_auth_token=os.getenv("HUGGINGFACE_HUB_TOKEN")
+            )
+            
+            # Otimizações baseadas no device
+            if device == "dml":
+                # Para DirectML, usar .to("dml") diretamente (mais compatível)
+                try:
+                    # Tentar usar string "dml" primeiro (mais compatível)
+                    pipes[full_model_name] = pipes[full_model_name].to("dml")
+                    logger.info("Using DirectML device: dml")
+                except Exception as e:
+                    logger.warning(f"Could not use DirectML with .to('dml'): {e}")
+                    # Tentar torch_directml como fallback
+                    try:
+                        import torch_directml
+                        dml_device = torch_directml.device()
+                        pipes[full_model_name] = pipes[full_model_name].to(dml_device)
+                        logger.info(f"Using DirectML device: {dml_device}")
+                    except Exception as e2:
+                        logger.warning(f"Could not use DirectML, falling back to CPU: {e2}")
+                        pipes[full_model_name] = pipes[full_model_name].to("cpu")
+                        device = "cpu"
+                
+                if device == "dml":
+                    # Otimizações críticas para DirectML
+                    pipes[full_model_name].enable_attention_slicing(1)  # Slice size 1 para DirectML
+                    pipes[full_model_name].enable_vae_slicing()
+                    # Não usar enable_xformers_memory_efficient_attention com DirectML
+                    logger.info("Applied AMD GPU optimizations")
+            elif device == "cuda":
+                pipes[full_model_name] = pipes[full_model_name].to("cuda")
+                pipes[full_model_name].enable_attention_slicing()
+                logger.info("Applied NVIDIA GPU optimizations")
+            else:
+                # Otimizações para CPU
+                pipes[full_model_name] = pipes[full_model_name].to("cpu")
+                pipes[full_model_name].enable_attention_slicing()
+                pipes[full_model_name].enable_vae_slicing()
+                # enable_model_cpu_offload requer accelerate, usar apenas se disponível
+                try:
+                    pipes[full_model_name].enable_model_cpu_offload()
+                    logger.info("Applied CPU optimizations with model offload")
+                except Exception as e:
+                    logger.warning(f"Model CPU offload not available: {e}, using standard CPU mode")
+                logger.info("Applied CPU optimizations")
+            
+            logger.info(f"Model {full_model_name} loaded successfully")
+            
+        except Exception as e:
+            logger.error(f"Error loading model {full_model_name}: {e}")
+            raise HTTPException(status_code=500, detail=f"Error loading model: {str(e)}")
+    
+    return pipes[full_model_name]
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint"""
+    device = detect_device()
+    return {
+        "status": "healthy",
+        "service": "APIBR2 Ultra Optimized Image Generation",
+        "device": device,
+        "timestamp": datetime.now().isoformat(),
+        "available_models": list(pipes.keys())
+    }
+
+@app.post("/generate")
+def generate_image(req: ImageRequest):
+    """Endpoint para geração de imagem com otimizações ultra"""
+    try:
+        logger.info(f"Generating image with model: {req.model}, prompt: {req.prompt}")
+        
+        start_time = time.time()
+        
+        # Detectar device atual
+        current_device = detect_device()
+        
+        # Obter configurações do modelo baseado no device
+        model_config = get_model_config(req.model, current_device)
+        
+        # Usar configurações otimizadas se não especificadas
+        if req.steps == 12:  # Valor padrão
+            req.steps = model_config['steps']
+        
+        # Limitar steps para DirectML (muito lento com muitos steps)
+        if current_device == "dml" and req.steps > 20:
+            logger.warning(f"DirectML: Limiting steps from {req.steps} to 20 for performance")
+            req.steps = 20
+        
+        # Carregar pipeline
+        pipe = get_pipe(req.model)
+        
+        # Limpar memória antes da geração
+        gc.collect()
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        
+        # Validar e ajustar tamanho da imagem
+        # DirectML/AMD GPU tem limitações de memória - usar 512x512 como máximo seguro
+        device = detect_device()
+        if device == "dml":
+            max_size = 512  # DirectML funciona melhor com 512x512
+            logger.info(f"DirectML detected - limiting max size to {max_size}x{max_size} for stability")
+        elif device == "cuda":
+            max_size = 1024  # NVIDIA geralmente tem mais VRAM
+        else:
+            max_size = 512  # CPU também funciona melhor com 512x512
+        
+        original_width = req.width
+        original_height = req.height
+        
+        if req.width > max_size or req.height > max_size:
+            logger.warning(f"Image size {req.width}x{req.height} exceeds max {max_size}x{max_size}, limiting...")
+            # Manter proporção
+            if req.width > req.height:
+                req.width = max_size
+                req.height = int((req.height / original_width) * max_size)
+            else:
+                req.height = max_size
+                req.width = int((req.width / original_height) * max_size)
+        
+        # Garantir que width e height são múltiplos de 8 (requisito do Stable Diffusion)
+        req.width = (req.width // 8) * 8
+        req.height = (req.height // 8) * 8
+        
+        # Garantir tamanho mínimo
+        if req.width < 64:
+            req.width = 64
+        if req.height < 64:
+            req.height = 64
+        
+        logger.info(f"Final image size: {req.width}x{req.height} (requested: {original_width}x{original_height})")
+        
+        # Gerar imagem
+        logger.info(f"Starting generation with {req.steps} steps, size: {req.width}x{req.height}...")
+        logger.info(f"Device: {current_device}, Model: {req.model}")
+        
+        # Para DirectML, avisar que pode demorar
+        if current_device == "dml":
+            logger.warning("⚠️ DirectML pode ser muito lento (2-10 minutos). Considere usar CPU para melhor estabilidade.")
+            logger.info("💡 Para forçar CPU, defina variável de ambiente: FORCE_CPU=true")
+        
+        try:
+            result = pipe(
+                req.prompt,
+                num_inference_steps=req.steps,
+                guidance_scale=req.guidance_scale,
+                height=req.height,
+                width=req.width
+            )
+        except Exception as gen_error:
+            # Se DirectML falhar por falta de memória, tentar reduzir tamanho ou usar CPU
+            error_str = str(gen_error).lower()
+            if "memory" in error_str or "not enough" in error_str or "allocate" in error_str:
+                logger.warning(f"GPU memory error: {gen_error}")
+                # Tentar reduzir tamanho primeiro
+                if req.width > 512 or req.height > 512:
+                    logger.info("Trying with reduced size 512x512...")
+                    try:
+                        req.width = 512
+                        req.height = 512
+                        result = pipe(
+                            req.prompt,
+                            num_inference_steps=req.steps,
+                            guidance_scale=req.guidance_scale,
+                            height=req.height,
+                            width=req.width
+                        )
+                        logger.info("Generation completed with reduced size")
+                    except Exception as size_error:
+                        logger.warning(f"Reduced size also failed: {size_error}")
+                        # Fallback para CPU
+                        logger.info("Falling back to CPU...")
+                        try:
+                            pipe_cpu = pipe.to("cpu")
+                            result = pipe_cpu(
+                                req.prompt,
+                                num_inference_steps=req.steps,
+                                guidance_scale=req.guidance_scale,
+                                height=req.height,
+                                width=req.width
+                            )
+                            logger.info("Generation completed on CPU (memory fallback)")
+                        except Exception as cpu_error:
+                            logger.error(f"CPU fallback also failed: {cpu_error}")
+                            raise HTTPException(status_code=500, detail=f"Generation failed: Out of memory. Try smaller image size (512x512 recommended).")
+                else:
+                    # Já está em 512x512, tentar CPU
+                    logger.info("Already at minimum size, falling back to CPU...")
+                    try:
+                        pipe_cpu = pipe.to("cpu")
+                        result = pipe_cpu(
+                            req.prompt,
+                            num_inference_steps=req.steps,
+                            guidance_scale=req.guidance_scale,
+                            height=req.height,
+                            width=req.width
+                        )
+                        logger.info("Generation completed on CPU (memory fallback)")
+                    except Exception as cpu_error:
+                        logger.error(f"CPU fallback also failed: {cpu_error}")
+                        raise HTTPException(status_code=500, detail=f"Generation failed: {str(gen_error)}")
+            elif "dml" in error_str or "ensure_in_bounds" in error_str or "privateuseone" in error_str:
+                logger.warning(f"DirectML error during generation: {gen_error}")
+                logger.info("Falling back to CPU for this generation...")
+                try:
+                    pipe_cpu = pipe.to("cpu")
+                    result = pipe_cpu(
+                        req.prompt,
+                        num_inference_steps=req.steps,
+                        guidance_scale=req.guidance_scale,
+                        height=req.height,
+                        width=req.width
+                    )
+                    logger.info("Generation completed on CPU (DirectML fallback)")
+                except Exception as cpu_error:
+                    logger.error(f"CPU fallback also failed: {cpu_error}")
+                    raise HTTPException(status_code=500, detail=f"Generation failed on both DirectML and CPU: {str(gen_error)}")
+            else:
+                raise
+        
+        image = result.images[0]
+        generation_time = time.time() - start_time
+        
+        # Salvar imagem
+        timestamp = int(time.time())
+        model_short_name = req.model.split('/')[-1] if '/' in req.model else req.model
+        filename = f"{model_short_name}_{timestamp}_{uuid.uuid4().hex[:8]}.png"
+        filepath = OUT_DIR / filename
+        
+        image.save(filepath)
+        logger.info(f"Image saved: {filepath}")
+        
+        # Converter para base64
+        with open(filepath, "rb") as image_file:
+            image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        
+        # Limpar memória após geração
+        gc.collect()
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        
+        return {
+            "success": True,
+            "data": {
+                "image_base64": image_base64,
+                "image_url": f"http://apibr.giesel.com.br/images/{filename}",
+                "local_path": str(filepath),
+                "prompt": req.prompt,
+                "model": req.model,
+                "size": req.size,
+                "timestamp": datetime.now().isoformat()
+            },
+            "metadata": {
+                "model": req.model,
+                "generation_time": round(generation_time, 2),
+                "steps": req.steps,
+                "guidance_scale": req.guidance_scale,
+                "device": detect_device(),
+                "optimization_level": "ultra",
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        # Limpar memória em caso de erro
+        gc.collect()
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models")
+def list_models():
+    """Listar modelos com configurações otimizadas"""
+    return {
+        "models": {
+            "runwayml/stable-diffusion-v1-5": {
+                "name": "Stable Diffusion 1.5",
+                "description": "Modelo público ultra-otimizado",
+                "supported_operations": ["generate"],
+                "default_steps": 12,
+                "default_guidance_scale": 7.5,
+                "recommended_size": "512x512",
+                "performance": "60-80s"
+            },
+            "stabilityai/sdxl-turbo": {
+                "name": "SDXL Turbo",
+                "description": "Geração ultra-rápida",
+                "supported_operations": ["generate"],
+                "default_steps": 6,
+                "default_guidance_scale": 7.5,
+                "recommended_size": "512x512",
+                "performance": "20-30s"
+            },
+            "lykon/dreamshaper-8": {
+                "name": "DreamShaper",
+                "description": "Estilo artístico otimizado",
+                "supported_operations": ["generate"],
+                "default_steps": 12,
+                "default_guidance_scale": 7.5,
+                "recommended_size": "512x512",
+                "performance": "50-70s"
+            }
+        },
+        "device_info": {
+            "current_device": detect_device(),
+            "optimization_level": "ultra",
+            "memory_management": "enabled"
+        }
+    }
+
+@app.get("/images/{filename}")
+def serve_image(filename: str):
+    """Servir imagens geradas"""
+    try:
+        filepath = OUT_DIR / filename
+        if filepath.exists():
+            return FileResponse(filepath, media_type='image/png')
+        else:
+            raise HTTPException(status_code=404, detail="Image not found")
+    except Exception as e:
+        logger.error(f"Error serving image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info("Starting APIBR2 Ultra Optimized Image Generation Server...")
+    logger.info(f"Output directory: {OUT_DIR.absolute()}")
+    logger.info(f"Detected device: {detect_device()}")
+    logger.info("Ultra optimizations enabled")
+    uvicorn.run(app, host="0.0.0.0", port=5001) 

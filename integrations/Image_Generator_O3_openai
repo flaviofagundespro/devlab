@@ -1,0 +1,219 @@
+## Por que os erros acontecem?
+
+1. **404 – FLUX.1-dev**  
+   • O repositório não existe no Hugging Face ou está em modo privado com outro nome.  
+   • Se o modelo está apenas no seu disco, use o **caminho local** em vez do `repo_id`.
+
+2. **403 – stable-diffusion-3.5-large**  
+   • Esse modelo é **gated (restrito)**. Você precisa receber aprovação manual no Hugging Face antes de poder baixá-lo, mesmo com token.  
+
+---
+
+## Como resolver passo a passo
+
+### 1. Garanta que o token esteja ativo no ambiente
+
+```bash
+# Linux/macOS
+export HUGGINGFACE_HUB_TOKEN=hf_seuTokenAqui
+
+# Windows PowerShell
+setx HUGGINGFACE_HUB_TOKEN "hf_seuTokenAqui"
+```
+
+Ou faça login interativo uma única vez:
+
+```bash
+pip install --upgrade huggingface_hub
+huggingface-cli login --token hf_seuTokenAqui
+```
+
+### 2. Ajuste o código para usar o token (opcional se já exportou a variável)
+
+```python
+from diffusers import StableDiffusionPipeline
+import torch, os
+
+model_id = "runwayml/stable-diffusion-v1-5"  # modelo público
+
+pipe = StableDiffusionPipeline.from_pretrained(
+    model_id,
+    torch_dtype=torch.float16,
+    use_auth_token=os.getenv("HUGGINGFACE_HUB_TOKEN")  # ou True
+)
+```
+
+### 3. Use um modelo público até ter acesso ao gated
+
+Modelos que funcionam sem aprovação:
+
+| Modelo | Qualidade | VRAM (fp16) |
+|--------|-----------|-------------|
+| `runwayml/stable-diffusion-v1-5` | Boa | ~6 GB |
+| `stabilityai/sdxl-turbo` | Muito rápida | ~8 GB |
+| `lykon/dreamshaper-8` | Estilo variado | ~6 GB |
+
+Troque simplesmente o `model_id` para um desses.
+
+### 4. Quer usar o FLUX local?
+
+Se o checkpoint está em `C:\Models\flux`, basta:
+
+```python
+model_id = r"C:\Models\flux"   # caminho local
+pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+```
+
+### 5. Solicitar acesso ao modelo gated
+
+1. Acesse a página do modelo (ex.: https://huggingface.co/stabilityai/stable-diffusion-3.5-large){target="_blank"}  
+2. Clique em “**Request Access**” e aguarde aprovação.  
+3. Depois de aprovado, seu token READ funcionará automaticamente.
+
+### 6. Rodando em CPU: cuidado 🔌
+
+• Difusão em CPU é **muito lenta** (minutos por imagem) e exige muita RAM.  
+• Se não tem GPU, reduza para `torch_dtype=torch.float32` e use `pipe = pipe.to("cpu")`.  
+• Para testes rápidos, use `num_inference_steps=10`.
+
+```python
+image = pipe(prompt, num_inference_steps=10).images[0]
+```
+
+---
+
+## Checklist final
+
+- [ ] Token configurado (variável de ambiente **ou** `huggingface-cli login`).  
+- [ ] Modelo público selecionado **ou** aprovação concedida.  
+- [ ] Nome/caminho do modelo digitado corretamente.  
+- [ ] Código atualizado com `use_auth_token`.  
+
+Se após isso ainda aparecer erro, mande aqui **a mensagem completa** que investigamos o próximo detalhe! 😉
+---
+tenho gpu, mas é radeon e windows, funciona?
+----
+## Funciona, mas há limitações – veja as opções para AMD (Radeon) no Windows 🖥️➡️🎨
+
+Hoje o ecossistema Stable Diffusion é muito mais maduro para GPUs NVIDIA (CUDA). Para AMD no Windows ainda não existe suporte “oficial” via ROCm/HIP como há no Linux. Mesmo assim, você tem três caminhos práticos:
+
+---
+
+### 1. ONNX Runtime + DirectML (funciona no Windows)
+
+Vantagens  
+• Não depende de CUDA nem ROCm.  
+• Usa a API DirectML que vem com o driver AMD.  
+• Funciona em qualquer GPU Radeon compatível com DirectX 12 (GCN 4+/RDNA).  
+
+Como usar (resumido)  
+1. Instale a versão DirectML do ONNX Runtime:  
+   ```powershell
+   pip install onnxruntime-directml
+   ```
+2. Converta o modelo Stable Diffusion de `diffusers` para ONNX (há script pronto no repositório `diffusers/examples/onnx`):  
+   ```bash
+   python convert_diffusers_to_onnx.py ^
+     --model runwayml/stable-diffusion-v1-5 ^
+     --output onnx_sd15
+   ```
+3. Carregue o modelo com provider `"DmlExecutionProvider"`:
+
+   ```python
+   import onnxruntime as ort
+   from diffusers import OnnxStableDiffusionPipeline
+
+   sess_options = ort.SessionOptions()
+   providers = [("DmlExecutionProvider", {"device_id": 0})]
+
+   pipe = OnnxStableDiffusionPipeline.from_pretrained(
+       "onnx_sd15",
+       provider="DmlExecutionProvider",
+       sess_options=sess_options
+   )
+   img = pipe("Um gato fofo no jardim").images[0]
+   img.save("gato.png")
+   ```
+
+Desempenho: entre 2-4× mais lento que CUDA equivalente, mas 5-10× mais rápido que CPU.
+
+---
+
+### 2. `torch-directml` (PyTorch sobre DirectML)
+
+Ainda experimental, mas permite usar pipelines `diffusers` (sem ONNX) alterando uma linha:
+
+```powershell
+pip uninstall torch torchvision torchaudio -y
+pip install torch-directml
+```
+
+No código:
+
+```python
+import torch
+from diffusers import StableDiffusionPipeline
+
+device = torch.device("dml")  # em vez de "cuda"
+pipe = StableDiffusionPipeline.from_pretrained(
+    "runwayml/stable-diffusion-v1-5",
+    torch_dtype=torch.float16
+).to(device)
+```
+
+Limitações  
+• Algumas extensões do pipeline não funcionam (ControlNet, LoRA).  
+• Memória extra – use `torch_dtype=torch.float16` e `pipe.enable_attention_slicing()`.
+
+---
+
+### 3. WSL 2 + Ubuntu + ROCm (mais trabalhoso)
+
+### A AMD e a Microsoft anunciaram suporte ROCm no WSL 2, mas está **em preview fechado**. Se/quando disponível:
+
+| 1. Ative GPU-PARAVIRTUALIZATION no WSL. |
+|---|
+
+
+2. Instale driver preview AMD + ROCm em Ubuntu.  
+3. Use PyTorch ROCm normalmente (`pip install torch==2.2.0+rocm`).  
+
+Por enquanto, o caminho 1 (DirectML) é o que “funciona hoje”.
+
+---
+
+## Dicas rápidas para seu servidor
+
+1. Detectar provider automaticamente:
+
+```python
+import torch
+
+if torch.backends.mps.is_available():
+    device = "mps"               # Apple
+elif torch.has_cuda:
+    device = "cuda"
+elif "dml" in torch.device().type:   # após torch-directml
+    device = "dml"
+else:
+    device = "cpu"
+```
+
+2. Reduzir consumo em GPU AMD (VRAM limitada):
+```python
+pipe.enable_attention_slicing()
+pipe.enable_vae_slicing()
+pipe.to(memory_efficient_attention=True)  # se suportado
+```
+
+3. Comece com ​`runwayml/stable-diffusion-v1-5` (público) e `num_inference_steps=20` para validar a rota.
+
+---
+
+### Resumindo
+
+• **Sim, dá para usar sua Radeon no Windows**, mas ainda não é plug-and-play como CUDA.  
+• O método **mais simples hoje** é ONNX Runtime + DirectML.  
+• Para máxima compatibilidade, considere Linux + ROCm ou esperar o suporte oficial no WSL 2.  
+
+Testou e ficou travado em algum passo? Envie o erro exato e o modelo da GPU 🎯 que continuamos a depuração!

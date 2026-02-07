@@ -12,6 +12,8 @@ APIBR2 is a hybrid-architecture automation platform combining:
 
 The backend uses ES modules (`"type": "module"` in package.json).
 
+**Cross-Platform Compatibility**: The codebase is designed to work on both Windows and Linux. All file paths use `path.join()` (Node.js) or `pathlib.Path` (Python) for cross-platform compatibility. See [CROSS_PLATFORM.md](CROSS_PLATFORM.md) for detailed setup instructions.
+
 ## Commands
 
 ### Backend

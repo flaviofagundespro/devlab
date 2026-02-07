@@ -2,6 +2,8 @@
 
 APIBR2 is a production-grade automation stack that blends high-volume web scraping, media enrichment, and AI content generation. The backend is built with Node.js/Express, while Python services handle GPU-accelerated workloads such as Stable Diffusion, Whisper, and video processing. Automations can be chained through n8n or invoked directly via REST.
 
+> **Cross-Platform**: Fully compatible with Windows and Linux. See [CROSS_PLATFORM.md](CROSS_PLATFORM.md) for detailed setup instructions and performance comparisons.
+
 ## Architecture
 
 ```
@@ -26,9 +28,25 @@ APIBR2/
 
 ### Prerequisites
 - Node.js 18+
-- Python 3.10+ (with pip) and optionally CUDA/DirectML drivers
+- Python 3.10+ (with pip)
 - Redis (local or remote) for cache/job metadata
-- Git, PowerShell 7+, and optional Docker for deployment
+- Git
+- **Windows**: PowerShell 7+
+- **Linux**: Bash, chmod for script permissions
+- **Optional**: CUDA (NVIDIA) or ROCm (AMD on Linux) for GPU acceleration
+
+### Quick Start (All Platforms)
+
+**Windows:**
+```powershell
+.\start_all.ps1  # Starts backend, Python services, and frontend
+```
+
+**Linux:**
+```bash
+chmod +x start_all.sh stop_apibr2.sh
+./start_all.sh   # Starts all services in terminal tabs
+```
 
 ### Backend (Node.js)
 ```bash
@@ -50,15 +68,33 @@ LOG_LEVEL=info
 ```
 
 ### Python AI services
+
+**Windows:**
+```powershell
+cd APIBR2\integrations
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+# For AMD GPU (DirectML - limited performance)
+pip install torch-directml
+# For NVIDIA GPU
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+python ultra_optimized_server.py
+```
+
+**Linux:**
 ```bash
 cd APIBR2/integrations
-python -m venv .venv && source .venv/bin/activate  # PowerShell: .venv\Scripts\Activate.ps1
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-# CPU-friendly torch build
+# For AMD GPU (ROCm - best performance)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7
+# For NVIDIA GPU
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# For CPU only
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-# Optional AMD DirectML stack
-pip install torch-directml onnxruntime-directml
-python ultra_optimized_server.py
+python3 ultra_optimized_server.py
 ```
 
 Environment toggles (read inside `ultra_optimized_server.py`):
@@ -158,10 +194,13 @@ curl -X POST http://localhost:5001/generate \
 | RX 6750 XT (DirectML, before fixes) | ~44 s | 0.4× (baseline) |
 | CPU Ryzen 9 7900X (no GPU) | ~45 s | matches old DirectML performance |
 
-Notes:
-- DirectML now competes with entry-level NVIDIA GPUs once Secure Boot and driver optimizations are applied.
-- Automatic fallbacks still shrink resolution or migrate to CPU when memory pressure is detected.
-- `ultra_optimized_server.py` keeps pipelines cached, so the first request is slower while subsequent generations leverage warm caches.
+**Platform Performance Notes:**
+- ⚡ Linux + ROCm (AMD) is 5x faster than Windows on same hardware (6-7s vs 30s for 512×512)
+- 🪟 Windows DirectML shows no speed advantage over CPU for AMD GPUs
+- 🐧 For production AMD deployments, use Linux with ROCm drivers
+- 🟢 NVIDIA CUDA works well on both Windows and Linux
+- ✅ CPU fallback provides consistent ~30s performance across all platforms
+- First request downloads/loads model; subsequent requests use hot cache
 
 ## Testing
 ```bash

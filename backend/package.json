@@ -1,7 +1,7 @@
 {
-  "name": "apibr",
+  "name": "devlab",
   "version": "1.0.0",
-  "description": "Professional web scraping API with browser pool management",
+  "description": "Modular automation and media platform for AI content generation and web scraping",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

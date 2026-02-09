@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-APIBR2 is a hybrid-architecture automation platform combining:
+DevLab is a hybrid-architecture automation platform combining:
 - **Node.js/Express REST API** (port 3000) — gateway for routing, scraping, and orchestration
 - **Python FastAPI services** (port 5001 for image gen, port 5002 for video downloads) — GPU-accelerated AI workloads
 - **React/Vite frontend** (port 5173) — media studio dashboard
@@ -12,7 +12,7 @@ APIBR2 is a hybrid-architecture automation platform combining:
 
 The backend uses ES modules (`"type": "module"` in package.json).
 
-**Cross-Platform Compatibility**: The codebase is designed to work on both Windows and Linux. All file paths use `path.join()` (Node.js) or `pathlib.Path` (Python) for cross-platform compatibility. See [CROSS_PLATFORM.md](CROSS_PLATFORM.md) for detailed setup instructions.
+**Primary Focus**: Windows-first development. While cross-platform compatible, the project is optimized for Windows home use. Linux compatibility is maintained but not guaranteed.
 
 ## Commands
 
@@ -48,10 +48,11 @@ python ultra_optimized_server.py    # image generation (port 5001)
 python instagram_server.py          # video downloader (port 5002)
 ```
 
-### Full Stack
+### Full Stack - Interactive Menu
 ```powershell
-.\start_all.ps1      # Windows: launches all services in separate windows
+.\start_all.ps1      # Windows: interactive menu to choose services
 .\stop_apibr2.ps1    # Windows: graceful shutdown
+.\check_status.ps1   # Windows: check running services
 ```
 ```bash
 ./start_all.sh       # Linux/macOS
@@ -62,8 +63,8 @@ python instagram_server.py          # video downloader (port 5002)
 ```bash
 cd backend
 docker-compose up -d                              # production
-docker-compose --profile dev up -d apibr-dev      # development
-docker-compose --profile monitoring up -d          # with Prometheus + Grafana
+docker-compose --profile dev up -d devlab-dev     # development
+docker-compose --profile monitoring up -d         # with Prometheus + Grafana
 ```
 
 ## Architecture
@@ -107,6 +108,7 @@ PORT=3000
 API_KEYS=dev-key-1,dev-key-2
 REDIS_URL=redis://localhost:6379
 PYTHON_SERVER_URL=http://localhost:5001
+VIDEO_SERVER_URL=http://localhost:5002
 BROWSER_POOL_SIZE=5
 LOG_LEVEL=info
 NODE_ENV=development
@@ -125,9 +127,35 @@ Main router at `backend/src/routes/api.js` combines all sub-routers:
 - `universal.js` → `/api/facebook/*`, `/api/amazon/*`, `/api/shopee/*`
 - `scrape.js`, `jobs.js`, `metrics.js`, `docs.js`
 
+## Launch Profiles
+
+The `start_all.ps1` script provides an interactive menu with the following profiles:
+
+1. **Full Stack** — All services (Backend + Image + Video + Frontend)
+2. **Video Downloader Only** — Backend + Video Downloader + Frontend
+3. **Image Generator Only** — Backend + Image Server + Frontend
+4. **Web Scraper Only** — Backend only (for API/automation use)
+5. **Custom** — Interactive selection of individual services
+
+This modular approach allows starting only needed services, optimizing resource usage.
+
 ## Monitoring
 
 - Prometheus metrics at `GET /api/metrics` (prom-client)
 - Health checks: `GET /health` (Node), `GET /health` (Python services)
 - Logging: Winston JSON logs (backend), STDOUT (Python)
 - n8n integration: configure `N8N_BASE_URL`, `N8N_API_KEY`, `N8N_WEBHOOK_URL`
+
+## Real-World Usage
+
+- **Image Generation**: Home experimentation without API limits
+- **Video Downloads**: Multi-platform video downloader for personal use
+- **Web Scraping**: Local automation and testing (production runs on VPS/Linux)
+
+## Performance Notes (Windows)
+- CPU (Ryzen 9 7900X): ~30s for 512×512 images
+- AMD RX 6750 XT with DirectML: ~18-30s (limited improvement over CPU)
+- DirectML on Windows doesn't provide significant speedup for AMD GPUs
+- Works well enough for home experimentation
+
+**Linux Note**: AMD GPUs with ROCm on Linux perform significantly better (~6-7s vs 30s on Windows)

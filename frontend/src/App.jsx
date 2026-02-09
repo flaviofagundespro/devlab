@@ -6,7 +6,7 @@ import './index.css';
 function Home() {
     return (
         <div className="app-container animate-fade-in">
-            <h1><span className="text-gradient">APIBR2 Studio</span></h1>
+            <h1><span className="text-gradient">DevLab Studio</span></h1>
             <p style={{ textAlign: 'center', fontSize: '1.2rem', maxWidth: '700px', margin: '0 auto 5rem', color: '#cbd5e1' }}>
                 Sua central de produção de mídia de próxima geração. <br />
                 Clone vozes, gere imagens ultra-realistas e baixe vídeos em segundos.

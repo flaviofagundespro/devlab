@@ -2,7 +2,7 @@
 
 ## Overview
 
-APIBR2 is designed to work seamlessly on **Windows** and **Linux** (Ubuntu/Debian). This guide explains platform-specific differences and how to get optimal performance on each OS.
+DevLab is designed to work seamlessly on **Windows** and **Linux** (Ubuntu/Debian). This guide explains platform-specific differences and how to get optimal performance on each OS.
 
 ## Quick Start by Platform
 
@@ -10,7 +10,7 @@ APIBR2 is designed to work seamlessly on **Windows** and **Linux** (Ubuntu/Debia
 ```powershell
 # Clone the repository
 git clone <your-repo-url>
-cd APIBR2
+cd DevLab
 
 # Install dependencies
 cd backend && npm install && cd ..
@@ -25,7 +25,7 @@ cd integrations && python -m pip install -r requirements.txt && cd ..
 ```bash
 # Clone the repository
 git clone <your-repo-url>
-cd APIBR2
+cd DevLab
 
 # Install dependencies
 cd backend && npm install && cd ..
@@ -130,13 +130,13 @@ filepath = "generated_images/" + filename + ".png"
 
 ### Windows
 - `start_all.ps1` - Start all services in separate windows
-- `stop_apibr2.ps1` - Stop all APIBR2 processes
+- `stop_devlab2.ps1` - Stop all DevLab processes
 - `clean_cache.ps1` - Clear Redis and temp files
 - `check_status.ps1` - Check running services
 
 ### Linux
 - `start_all.sh` - Start all services in terminal tabs
-- `stop_apibr2.sh` - Stop all APIBR2 processes
+- `stop_devlab2.sh` - Stop all DevLab processes
 - `update_ytdlp.sh` - Update yt-dlp to latest version
 
 ## Common Issues
@@ -144,7 +144,7 @@ filepath = "generated_images/" + filename + ".png"
 ### Issue: "Command not found" on Linux
 **Solution**: Make scripts executable
 ```bash
-chmod +x start_all.sh stop_apibr2.sh
+chmod +x start_all.sh stop_devlab2.sh
 ```
 
 ### Issue: DirectML slow on Windows
@@ -173,7 +173,7 @@ Docker works identically on Windows and Linux:
 
 ```bash
 # Development mode
-docker-compose --profile dev up -d apibr-dev
+docker-compose --profile dev up -d devlab-dev
 
 # Production mode
 docker-compose up -d

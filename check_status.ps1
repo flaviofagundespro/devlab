@@ -1,4 +1,4 @@
-Write-Host "Verificando status do APIBR2..." -ForegroundColor Green
+Write-Host "Verificando status do DevLab..." -ForegroundColor Green
 Write-Host ""
 
 # Verificar Backend

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # Main API service
-  apibr:
+  devlab:
     build:
       context: .
       target: production
@@ -25,7 +25,7 @@ services:
       - ./logs:/app/logs
     restart: unless-stopped
     networks:
-      - apibr-network
+      - devlab-network
 
   # Redis cache service
   redis:
@@ -36,11 +36,11 @@ services:
       - redis-data:/data
     restart: unless-stopped
     networks:
-      - apibr-network
+      - devlab-network
     command: redis-server --appendonly yes
 
   # Development service (alternative to production)
-  apibr-dev:
+  devlab-dev:
     build:
       context: .
       target: development
@@ -60,7 +60,7 @@ services:
       - /app/node_modules
       - ./logs:/app/logs
     networks:
-      - apibr-network
+      - devlab-network
     profiles:
       - dev
 
@@ -81,7 +81,7 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
-      - apibr-network
+      - devlab-network
     profiles:
       - monitoring
 
@@ -96,7 +96,7 @@ services:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
     networks:
-      - apibr-network
+      - devlab-network
     profiles:
       - monitoring
 
@@ -106,6 +106,6 @@ volumes:
   grafana-data:
 
 networks:
-  apibr-network:
+  devlab-network:
     driver: bridge
 

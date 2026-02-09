@@ -1,5 +1,5 @@
-# Script para parar todos os serviços do APIBR2
-Write-Host "Parando serviços do APIBR2..." -ForegroundColor Yellow
+# Script para parar todos os serviços do DevLab
+Write-Host "Parando serviços do DevLab..." -ForegroundColor Yellow
 
 function Kill-Port($port) {
     $tcp = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue

@@ -1,5 +1,5 @@
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "   APIBR2 - Iniciando Sistema Completo" -ForegroundColor Green
+Write-Host "   DevLab - Iniciando Sistema Completo" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 

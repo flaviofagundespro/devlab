@@ -1,343 +1,307 @@
-# 🚀 Scripts de Inicialização - APIBR2
+# 🚀 Startup Scripts - DevLab
 
-## 📋 Scripts Disponíveis
+## 📋 Available Scripts
 
-### 🎯 Script Principal - Iniciar Tudo
+### 🎯 Main Script - Start Everything
+```bash
+# Windows PowerShell (Interactive Menu)
+./start_all.ps1
+
+# Windows PowerShell (Legacy - No Menu)
+./start_apibr2.ps1
+
+# Linux/Mac
+./start_all.sh
+```
+
+### 🔧 Individual Scripts
+
+#### 1. Start Node.js Backend
 ```bash
 # Windows PowerShell
-./start_apibr2.ps1
+cd backend
+npm start
 
 # Linux/Mac
-./start_apibr2.sh
-```
-
-### 🔧 Scripts Individuais
-
-#### 1. Iniciar Backend Node.js
-```bash
-# Windows
-./start_backend.bat
-
-# PowerShell
-./start_backend.ps1
-
-# Linux/Mac
-./start_backend.sh
-```
-
-#### 2. Iniciar Servidor Python
-```bash
-# Windows
-./start_python.bat
-
-# PowerShell
-./start_python.ps1
-
-# Linux/Mac
-./start_python.sh
-```
-
-#### 3. Teste Completo
-```bash
-# PowerShell
-./test_ultra.ps1
-
-# Linux/Mac
-./test_ultra.sh
-```
-
-## 🛠️ Criando os Scripts
-
-### Windows Batch (.bat)
-
-#### start_apibr2.bat
-```batch
-@echo off
-echo ========================================
-echo    APIBR2 - Iniciando Sistema Completo
-echo ========================================
-echo.
-
-echo [1/3] Iniciando Backend Node.js...
-start "APIBR2 Backend" cmd /k "cd backend && npm start"
-
-echo [2/3] Aguardando 5 segundos...
-timeout /t 5 /nobreak > nul
-
-echo [3/3] Iniciando Servidor Python...
-start "APIBR2 Python" cmd /k "cd integrations && python ultra_optimized_server.py"
-
-echo.
-echo ========================================
-echo    Sistema iniciado com sucesso!
-echo    Backend: http://localhost:3000
-echo    Python:  http://localhost:5001
-echo ========================================
-echo.
-echo Pressione qualquer tecla para executar testes...
-pause > nul
-
-echo Executando testes...
-cd integrations
-test_ultra.ps1
-```
-
-#### start_backend.bat
-```batch
-@echo off
-echo Iniciando APIBR2 Backend...
 cd backend
 npm start
 ```
 
-#### start_python.bat
-```batch
-@echo off
-echo Iniciando APIBR2 Python Server...
+#### 2. Start Python Image Server
+```bash
+# Windows
 cd integrations
 python ultra_optimized_server.py
-```
 
-### PowerShell (.ps1)
-
-#### start_apibr2.ps1
-```powershell
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "   APIBR2 - Iniciando Sistema Completo" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-
-Write-Host "[1/3] Iniciando Backend Node.js..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; npm start" -WindowStyle Normal
-
-Write-Host "[2/3] Aguardando 5 segundos..." -ForegroundColor Yellow
-Start-Sleep -Seconds 5
-
-Write-Host "[3/3] Iniciando Servidor Python..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd integrations; python ultra_optimized_server.py" -WindowStyle Normal
-
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "    Sistema iniciado com sucesso!" -ForegroundColor Green
-Write-Host "    Backend: http://localhost:3000" -ForegroundColor Cyan
-Write-Host "    Python:  http://localhost:5001" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-
-$response = Read-Host "Executar testes agora? (s/n)"
-if ($response -eq "s" -or $response -eq "S") {
-    Write-Host "Executando testes..." -ForegroundColor Yellow
-    Set-Location integrations
-    .\test_ultra.ps1
-}
-```
-
-#### start_backend.ps1
-```powershell
-Write-Host "Iniciando APIBR2 Backend..." -ForegroundColor Green
-Set-Location backend
-npm start
-```
-
-#### start_python.ps1
-```powershell
-Write-Host "Iniciando APIBR2 Python Server..." -ForegroundColor Green
-Set-Location integrations
-python ultra_optimized_server.py
-```
-
-### Linux/Mac Shell (.sh)
-
-#### start_apibr2.sh
-```bash
-#!/bin/bash
-
-echo "========================================"
-echo "   APIBR2 - Iniciando Sistema Completo"
-echo "========================================"
-echo ""
-
-echo "[1/3] Iniciando Backend Node.js..."
-gnome-terminal -- bash -c "cd backend && npm start; exec bash" &
-# Para outros terminais: xterm, konsole, etc.
-
-echo "[2/3] Aguardando 5 segundos..."
-sleep 5
-
-echo "[3/3] Iniciando Servidor Python..."
-gnome-terminal -- bash -c "cd integrations && python ultra_optimized_server.py; exec bash" &
-
-echo ""
-echo "========================================"
-echo "    Sistema iniciado com sucesso!"
-echo "    Backend: http://localhost:3000"
-echo "    Python:  http://localhost:5001"
-echo "========================================"
-echo ""
-
-read -p "Executar testes agora? (s/n): " response
-if [[ $response =~ ^[Ss]$ ]]; then
-    echo "Executando testes..."
-    cd integrations
-    ./test_ultra.sh
-fi
-```
-
-#### start_backend.sh
-```bash
-#!/bin/bash
-echo "Iniciando APIBR2 Backend..."
-cd backend
-npm start
-```
-
-#### start_python.sh
-```bash
-#!/bin/bash
-echo "Iniciando APIBR2 Python Server..."
+# Linux/Mac
 cd integrations
-python ultra_optimized_server.py
+python3 ultra_optimized_server.py
 ```
 
-## 🔧 Scripts de Manutenção
-
-### Limpar Cache
+#### 3. Start Video Downloader
 ```bash
 # Windows
-./clean_cache.bat
-
-# PowerShell
-./clean_cache.ps1
+cd integrations
+python instagram_server.py
 
 # Linux/Mac
-./clean_cache.sh
+cd integrations
+python3 instagram_server.py
 ```
 
-### Reiniciar Tudo
+#### 4. Start Frontend
 ```bash
-# Windows
-./restart_all.bat
-
-# PowerShell
-./restart_all.ps1
-
-# Linux/Mac
-./restart_all.sh
+# Windows/Linux/Mac
+cd frontend
+npm run dev
 ```
 
-### Verificar Status
-```bash
-# Windows
-./check_status.bat
+## 🎨 Interactive Menu (start_all.ps1)
 
-# PowerShell
-./check_status.ps1
+The new modular startup menu allows you to choose which services to start:
 
-# Linux/Mac
-./check_status.sh
+```
+╔══════════════════════════════════════════╗
+║         DevLab - Modular System          ║
+╠══════════════════════════════════════════╣
+║  1. 🚀 Full Stack (Everything)           ║
+║  2. 🎬 Video Downloader Only             ║
+║  3. 🎨 Image Generator Only              ║
+║  4. 🕷️  Web Scraper Only                  ║
+║  5. ⚙️  Custom (choose services)         ║
+║  6. ❌ Exit                               ║
+╚══════════════════════════════════════════╝
 ```
 
-## 📊 Scripts de Monitoramento
+### Profile Details
 
-### check_status.ps1
+**1. Full Stack**
+- Backend (3000)
+- Image Server (5001)
+- Video Downloader (5002)
+- Frontend (5173)
+
+**2. Video Downloader Only**
+- Backend (3000)
+- Video Downloader (5002)
+- Frontend (5173)
+
+**3. Image Generator Only**
+- Backend (3000)
+- Image Server (5001)
+- Frontend (5173)
+
+**4. Web Scraper Only**
+- Backend (3000)
+
+**5. Custom**
+- Interactive selection of each service
+
+## 🛠️ Maintenance Scripts
+
+### Stop All Services
 ```powershell
-Write-Host "Verificando status do APIBR2..." -ForegroundColor Green
-Write-Host ""
-
-# Verificar Backend
-Write-Host "Backend Node.js:" -ForegroundColor Yellow
-try {
-    $response = Invoke-RestMethod -Uri "http://localhost:3000/api/health" -Method GET -TimeoutSec 5
-    Write-Host "  ✅ Rodando (Porta 3000)" -ForegroundColor Green
-} catch {
-    Write-Host "  ❌ Não está rodando" -ForegroundColor Red
-}
-
-# Verificar Python
-Write-Host "Servidor Python:" -ForegroundColor Yellow
-try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5001/health" -Method GET -TimeoutSec 5
-    Write-Host "  ✅ Rodando (Porta 5001)" -ForegroundColor Green
-} catch {
-    Write-Host "  ❌ Não está rodando" -ForegroundColor Red
-}
-
-Write-Host ""
-Write-Host "Para iniciar os serviços:" -ForegroundColor Cyan
-Write-Host "  ./start_apibr2.ps1" -ForegroundColor White
+# Windows
+.\stop_apibr2.ps1
 ```
 
-### clean_cache.ps1
+### Check Status
 ```powershell
-Write-Host "Limpando cache do APIBR2..." -ForegroundColor Green
+# Windows
+.\check_status.ps1
+```
 
-# Limpar imagens geradas
+#### check_status.ps1 Output
+```
+Checking DevLab status...
+
+Backend Node.js:
+  ✅ Running (Port 3000)
+
+Python Image Server:
+  ✅ Running (Port 5001)
+
+Video Downloader:
+  ❌ Not running
+
+Frontend:
+  ✅ Running (Port 5173)
+```
+
+### Clean Cache
+```powershell
+# Windows
+.\clean_cache.ps1
+```
+
+## 📊 Monitoring Scripts
+
+### stop_apibr2.ps1
+Gracefully stops all DevLab services by terminating processes on ports:
+- 3000 (Backend)
+- 5001 (Image Server)
+- 5002 (Video Downloader)
+- 5173 (Frontend)
+
+```powershell
+# Usage
+.\stop_apibr2.ps1
+
+# Output
+Stopping DevLab services...
+  Killing process node (PID: 12345) on port 3000
+  Killing process python (PID: 12346) on port 5001
+  Killing process python (PID: 12347) on port 5002
+  Killing process node (PID: 12348) on port 5173
+All services stopped.
+```
+
+### clean_cache.ps1 (Example)
+```powershell
+Write-Host "Cleaning DevLab cache..." -ForegroundColor Green
+
+# Clean generated images
 if (Test-Path "integrations/generated_images") {
     Remove-Item "integrations/generated_images/*" -Force -Recurse
-    Write-Host "✅ Cache de imagens limpo" -ForegroundColor Green
+    Write-Host "✅ Image cache cleaned" -ForegroundColor Green
 }
 
-# Limpar logs antigos
+# Clean downloads
+if (Test-Path "integrations/downloads") {
+    Get-ChildItem "integrations/downloads/*" | Where-Object {$_.LastWriteTime -lt (Get-Date).AddDays(-7)} | Remove-Item -Force
+    Write-Host "✅ Old downloads removed" -ForegroundColor Green
+}
+
+# Clean old logs
 if (Test-Path "backend/logs") {
     Get-ChildItem "backend/logs/*.log" | Where-Object {$_.LastWriteTime -lt (Get-Date).AddDays(-7)} | Remove-Item -Force
-    Write-Host "✅ Logs antigos removidos" -ForegroundColor Green
+    Write-Host "✅ Old logs removed" -ForegroundColor Green
 }
 
-Write-Host "Limpeza concluída!" -ForegroundColor Green
+Write-Host "Cleanup completed!" -ForegroundColor Green
 ```
 
-## 🎯 Uso Rápido
+## 🎯 Quick Usage Guide
 
-### 1. Primeira Vez
+### 1. First Time Setup
 ```bash
-# Instalar dependências
+# Install dependencies
 cd backend && npm install
+cd ../frontend && npm install
 cd ../integrations && pip install -r requirements.txt
 
-# Iniciar sistema
-./start_apibr2.ps1
+# Start system with menu
+cd ..
+.\start_all.ps1
 ```
 
-### 2. Uso Diário
+### 2. Daily Usage
 ```bash
-# Iniciar tudo
-./start_apibr2.ps1
+# Start with interactive menu
+.\start_all.ps1
 
-# Ou individualmente
-./start_backend.ps1
-./start_python.ps1
+# Choose your profile:
+# - Full Stack for development
+# - Video Downloader for personal use
+# - Image Generator for AI experiments
+# - Web Scraper for automation
 ```
 
-### 3. Manutenção
+### 3. Maintenance
 ```bash
-# Verificar status
-./check_status.ps1
+# Check what's running
+.\check_status.ps1
 
-# Limpar cache
-./clean_cache.ps1
+# Stop everything
+.\stop_apibr2.ps1
 
-# Reiniciar tudo
-./restart_all.ps1
+# Clean cache
+.\clean_cache.ps1
+
+# Restart with menu
+.\start_all.ps1
 ```
 
-## 📝 Notas Importantes
+## 📝 Important Notes
 
-### Permissões (Linux/Mac)
+### Windows Permissions
+PowerShell scripts may require execution policy changes:
+```powershell
+# Run as Administrator (one-time)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Linux/Mac Permissions
+Make scripts executable:
 ```bash
-chmod +x *.sh
+chmod +x start_all.sh stop_apibr2.sh
 ```
 
-### Dependências
-- Node.js instalado
-- Python instalado
-- Dependências instaladas
+### Dependencies
+- Node.js 18+ installed
+- Python 3.10+ installed
+- All dependencies installed (npm install, pip install -r requirements.txt)
 
-### Portas
-- 3000: Backend Node.js
-- 5001: Servidor Python
+### Ports Used
+- **3000**: Backend Node.js API
+- **5001**: Python Image Server
+- **5002**: Python Video Downloader
+- **5173**: React Frontend
+- **6379**: Redis (optional)
+
+### Environment Variables
+Create `.env` file in `backend/` directory:
+```env
+PORT=3000
+API_KEYS=dev-key-1,dev-key-2
+REDIS_URL=redis://localhost:6379
+PYTHON_SERVER_URL=http://localhost:5001
+VIDEO_SERVER_URL=http://localhost:5002
+```
+
+## 🔄 Script Evolution
+
+### Old Way (start_apibr2.ps1)
+Starts all services sequentially without choice:
+```powershell
+.\start_apibr2.ps1
+# Starts: Backend → Image → Video → Frontend
+```
+
+### New Way (start_all.ps1)
+Interactive menu with profiles:
+```powershell
+.\start_all.ps1
+# Shows menu → Choose profile → Starts selected services
+```
+
+**Benefit**: Save resources by running only what you need!
+
+## 🌐 Cross-Platform Compatibility
+
+### Windows
+- Primary focus
+- PowerShell scripts (.ps1)
+- Interactive menu fully supported
+- All features tested
+
+### Linux/Mac
+- Bash scripts (.sh) available
+- No interactive menu yet (uses legacy start_all.sh)
+- All services work identically
+- Better GPU performance (AMD with ROCm)
+
+## 🎉 Success Checklist
+
+After running scripts, you should have:
+- ✅ Services running in separate windows/tabs
+- ✅ Backend API accessible at http://localhost:3000
+- ✅ Python services responding to health checks
+- ✅ Frontend (if started) available at http://localhost:5173
+- ✅ Ability to stop all services with one command
 
 ---
 
-**🎯 Objetivo**: Inicialização rápida e fácil  
-**✅ Status**: Scripts prontos para uso  
-**📚 Documentação**: Ver README.md para detalhes 
+**🎯 Goal**: Quick and easy system startup
+**✅ Status**: Scripts ready to use
+**📚 Documentation**: See README.md for details
